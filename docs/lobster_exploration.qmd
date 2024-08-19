@@ -1,0 +1,105 @@
+---
+title: "day6_activity"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+```
+
+```{r}
+lobsters <- read_csv(here("data","Lobster_Abundance_All_Years_20210412.csv"), na = c("-99999", "")) %>% 
+  clean_names() %>% 
+  uncount(count)
+```
+
+```{r}
+lobster_total <- lobsters %>% 
+  group_by(site, year) %>% 
+  summarise(individuals = n(), carapace_mean = mean(size_mm, na.rm = TRUE))
+
+# Create a ggplot graph of the number of total lobsters observed (y-axis) by year (x-axis) in the study, grouped (either aesthetically or by faceting) by site
+
+ggplot(lobster_total, aes(x = year, y = individuals)) + geom_line(aes(group = site, color = site))
+
+# or this way
+ggplot(lobster_total, aes(x = site, y = individuals)) + geom_point(aes(color = site)) + facet_wrap(vars(year))
+
+```
+
+```{r}
+#The legal lobster size (carapace length) in California is 79.76 mm.
+
+lobster_2020 <- subset(lobsters, year == 2020)
+
+legal_lobster_2020 <- lobster_2020 %>% mutate(legal = dplyr::case_when(size_mm <= 79.76 ~ 'YES',
+                                                                       size_mm >= 79.76 ~ 'NO')) %>%
+  group_by(site, legal) %>%
+  summarise(total_lobsters = n())
+
+ggplot(legal_lobster_2020, aes(x = site, y = total_lobsters)) + geom_col(aes(fill = legal), position = "fill")
+
+```
+
+```{r}
+# Create and store a subset that only contains lobsters from sites “IVEE”, “CARP” and “NAPL”. Check your output data frame to ensure that only those three sites exist.
+ex_a <- lobsters %>%
+  filter(site == c("AQUE", "CARP", "NAPL"))
+
+# Create a subset that only contains lobsters observed in August.
+ex_b <- ex_a %>%
+  filter(month == 8)
+
+# Create a subset with lobsters at Arroyo Quemado (AQUE) OR with a carapace length greater than 70 mm.
+ex_c <- ex_b %>%
+  filter(site == "AQUE" | size_mm > 70)
+
+ex_d <- ex_c %>% 
+  filter(site != "NAPL")
+
+```
+
+```{r}
+ex_e <- lobsters %>%
+  group_by(site) %>% 
+  summarize(carapace_mean = mean(size_mm, na.rm = TRUE), carapace_sd = sd(size_mm, na.rm = TRUE))
+
+ex_f <- lobsters %>%
+  group_by(site, month) %>% 
+  summarize(carapace_max_lenght = max(size_mm, na.rm = TRUE))
+
+```
+
+```{r}
+ex_g <- lobsters %>% 
+  mutate(carapace_length_cm = size_mm * 10)
+
+ex_h <- lobsters %>% 
+  mutate(site = tolower(site))
+
+ex_i <- lobsters %>% 
+  mutate(area = as.character(area))
+
+class(ex_i$area)
+```
+
+
+```{r}
+ex_j <- lobsters %>% mutate(size_bin = case_when(size_mm <= 70 ~ "small",
+                                                 size_mm > 70 ~ "large"))
+
+# Use case_when() to add a new column called designation that contains “MPA” if the site is “IVEE” or “NAPL”, and “not MPA” for all other outcomes.
+
+ex_k <- lobsters %>% mutate(designation = case_when(site %in% c("NAPL", "IVEE") ~ "MPA",
+                                                    TRUE ~ "not MPA"))
+                                                  
+                                                                
+                                                                
+                                              
+                                                   
+```
+
